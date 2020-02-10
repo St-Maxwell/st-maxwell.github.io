@@ -21,6 +21,114 @@
       </tags>
   </entry>
   <entry>
+    <title>利用.fch文件计算电子密度的代码</title>
+    <url>/calculating-electron-density-with-fch-file/</url>
+    <content><![CDATA[<p>最近在看密度泛函的书，于是就想自己写一个能计算电子密度的程序，这样就可以具体地了解一些体系。而且由于更早一些时候才正经学了基组的知识，想弄清楚怎么把市面上的基组放在程序中使用（之前写HF程序用的是STO-3G，不涉及到分裂价层，而且没有涉及更多的壳层）。所以写这么一个程序还是可以帮我学到很多东西的。</p>
+<p>代码上传到GitHub：<a href="https://github.com/St-Maxwell/ElectronDensity" target="_blank">https://github.com/St-Maxwell/ElectronDensity</a></p>
+<p>参考了Sobereva的文章：<a href="http://sobereva.com/55" target="_blank">高斯fch文件与wfn波函数文件的介绍及转换方法</a>、<a href="http://sobereva.com/182" target="_blank">利用wfn文件计算电子密度的代码的编写方法</a>。<br><a id="more"></a></p>
+<h1 id="电子密度">电子密度</h1>
+在空间$\mathbf{r}$处找到任意一个电子的概率。
+
+$$ \rho(\mathbf{r}) =  N \int |\Psi(\mathbf{x}_1, \mathbf{x}_2,\ldots,\mathbf{x}_N)|^2\, d\omega_1 d\mathbf{x}_2\ldots d\mathbf{x}_N $$
+
+将上式展开为空间轨道（分子轨道）$\{\psi_a\}$，为
+
+$$ \rho(\mathbf{r}) = 2 \sum\limits_a^{N/2} |\psi_a(\mathbf{r})|^2 $$
+
+若是自然轨道，则为
+
+$$ \rho(\mathbf{r}) = \sum\limits_a^{N/2} \lambda_a |\eta_a(\mathbf{r})|^2 $$
+
+其中$\eta_a$是自然轨道，$\lambda$是自然轨道占据数。
+
+实际计算中将用一组基函数将轨道展开，则密度的表达式可写为
+
+$$ \rho(\mathbf{r}) = \sum\limits_a^{N/2} \lambda_a \left| \sum\limits_i C_{ai} \varphi_i(\mathbf{r}) \right|^2 $$
+
+$C_{ai}$是展开系数，$\lambda_a$对于分子轨道就是$2$，对于自然轨道则是非整数。
+
+基函数同样可以用一组Gaussian型函数（Gaussian Type Function，GTF）展开:
+
+$$ \varphi = \sum\limits_i a_i \chi_i^\text{GTF}(x,y,z) $$
+
+$a_i$是收缩系数，$\chi^\text{GTF}$假定是Cartesian型GTF，有如下形式
+
+$$ \chi = N x^{l_x} y^{l_y} z^{l_z} \mathrm{e}^{-\zeta r^2} $$
+
+归一化系数$N$的表达式为
+
+$$ \begin{aligned} N &= \left( \frac{2\zeta}{\pi} \right)^{3/4} \left[ \frac{(4\zeta)^{l_x+l_y+l_z}}{(2l_x-1)!!(2l_y-1)!!(2l_z-1)!!} \right]^{1/2} \\ &= \left( \frac{2\zeta}{\pi} \right)^{3/4} \left[ \frac{(8\zeta)^{l_x+l_y+l_z}l_x!l_y!l_z!}{(2l_x)!(2l_y)!(2l_z)!} \right]^{1/2} \end{aligned} $$
+
+<h2>电子密度的梯度</h2>
+电子密度的梯度为
+
+$$ \nabla \rho(\mathbf{r}) = \frac{\partial \rho(\mathbf{r})}{\partial x}\mathbf{x} + \frac{\partial \rho(\mathbf{r})}{\partial y}\mathbf{y} + \frac{\partial \rho(\mathbf{r})}{\partial z}\mathbf{z} $$
+
+以$\partial \rho/\partial x$为例：
+
+$$ \begin{aligned} \frac{\partial \rho}{\partial x} &= \frac{\partial}{\partial x} \sum\limits_a^{N/2} \lambda_a \psi_a^2(\mathbf{r}) \\ &= \sum\limits_a^{N/2} 2\lambda_a \psi_a(\mathbf{r}) \frac{\partial \psi_a(\mathbf{r})}{\partial x} \end{aligned} $$
+
+分子轨道的导数最终可以用GTF的导数的线性组合表示：
+
+$$ \frac{\partial \psi_a(\mathbf{r})}{\partial x} = \sum\limits_i C_{ai} \sum\limits_j a_{ij} \frac{\partial \chi_j(\mathbf{r})}{\partial x} $$
+
+GTF关于$x$的导数很容易得到，为
+
+$$ \frac{\partial \chi_j(\mathbf{r})}{\partial x} = (l_x x^{l_x-1} - 2\zeta x^{l_x+1}) N  y^{l_y} z^{l_z} \mathrm{e}^{-\zeta r^2} $$
+
+梯度的模
+
+$$ |\nabla \rho| = \sqrt{\bigg(\frac{\partial \rho}{\partial x}\bigg)^2 + \bigg(\frac{\partial \rho}{\partial y}\bigg)^2 + \bigg(\frac{\partial \rho}{\partial z}\bigg)^2} $$
+
+<h1 id="需要从.fch文件读取的量">需要从.fch文件读取的量</h1>
+波函数类型
+如果是自然轨道，需要手动将<code>.fch</code>文件第一行内容改为<code>isNO</code>；
+从第二行确定波函数为<code>R</code>、<code>U</code>、<code>RO</code>。若使用的方法首字母为O，且为闭壳层的情况，会误认为波函数为<code>RO</code>，虽然并不影响密度的计算。
+
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SP        RB3LYP                                   6-31G(d,p)</span><br><span class="line">电子数</span><br><span class="line">Number of electrons                        I               10</span><br><span class="line">Number of alpha electrons                  I                5</span><br><span class="line">Number of beta electrons                   I                5</span><br><span class="line">基函数数目</span><br><span class="line">Number of basis functions                  I               25</span><br><span class="line">收缩壳层数目</span><br><span class="line">Number of contracted shells                I               10</span><br><span class="line">原函数数目</span><br><span class="line">Number of primitive shells                 I               21</span><br><span class="line">壳层类型</span><br><span class="line">Shell types                                I   N&#x3D;          10</span><br><span class="line">每个壳层的收缩度</span><br><span class="line">Number of primitives per shell             I   N&#x3D;          10</span><br><span class="line">原函数的指数</span><br><span class="line">Primitive exponents                        R   N&#x3D;          21</span><br><span class="line">原函数收缩系数</span><br><span class="line">Contraction coefficients                   R   N&#x3D;          21</span><br><span class="line">原函数收缩系数（sp(p)型函数）</span><br><span class="line">P(S&#x3D;P) Contraction coefficients            R   N&#x3D;          21</span><br><span class="line">基函数坐标</span><br><span class="line">Coordinates of each shell                  R   N&#x3D;          30</span><br><span class="line">分子轨道系数</span><br><span class="line">Alpha MO coefficients                      R   N&#x3D;         625</span><br><span class="line">对于自然轨道，这一部分数据实际上是轨道占据数</span><br><span class="line">Alpha Orbital Energies                     R   N&#x3D;          25</span><br></pre></td></tr></table></figure>
+
+<h1 id="fch文件波函数类型">.fch文件波函数类型</h1>
+<h2 id="gaussian">Gaussian</h2>
+<ul>
+<li>限制性分子轨道
+<ul>
+<li>闭壳层：默认即可</li>
+<li>限制性开壳层：<code>RO</code></li>
+</ul></li>
+<li>非限制性分子轨道
+<ul>
+<li>开壳层：默认即可</li>
+<li>自旋极化单重态：<code>UHF/DFT guess=mix</code></li>
+</ul></li>
+<li>自然轨道
+<ul>
+<li><code>density=current</code> + <code>guess(save,only,naturalorbitals) chkbasis</code></li>
+<li>限制性闭壳层：默认</li>
+<li>非限制性开壳层：默认</li>
+<li>限制性开壳层：不支持（<code>RO</code>后HF都没有解析梯度）</li>
+<li>自旋极化单重态：以<code>UHF/DFT guess=mix</code>作为参考态</li>
+<li>Gaussian输出的.fch中，自然轨道不包含自旋信息，其占据数为$0 \text{--} 2$。虽然会输出<code>beta</code>轨道信息，但实际上和<code>alpha</code>轨道的信息一模一样。</li>
+</ul></li>
+</ul>
+
+<h1>用法</h1>
+
+<figure class="highlight fortran"><table><tr><td class="code"><pre><span class="line"><span class="keyword">use</span> m_basis_func</span><br><span class="line"><span class="keyword">use</span> m_routines</span><br><span class="line"><span class="keyword">type</span>(molecule) :: mol</span><br><span class="line"><span class="keyword">integer</span> :: iounit</span><br><span class="line"><span class="keyword">character</span>(len=<span class="number">80</span>) filename</span><br><span class="line"><span class="keyword">real</span>(<span class="keyword">kind</span>=<span class="number">8</span>) :: x, y, z</span><br><span class="line"></span><br><span class="line"><span class="comment">! read .fch file</span></span><br><span class="line"><span class="built_in">write</span>(*,*) <span class="string">"Input .fch file"</span></span><br><span class="line">read(*,*) filename</span><br><span class="line">open(<span class="keyword">newunit</span>=iounit, <span class="keyword">file</span>=filename, <span class="keyword">status</span>=<span class="string">'old'</span>, <span class="keyword">action</span>=<span class="string">'read'</span>)</span><br><span class="line"><span class="keyword">call</span> read_basis_func(iounit, mol)</span><br><span class="line"><span class="keyword">call</span> read_mo_coeff(iounit, mol)</span><br><span class="line">close(iounit)</span><br><span class="line"></span><br><span class="line"><span class="built_in">write</span>(*,*) mol%density(x, y, z, <span class="string">'t'</span>)</span><br><span class="line"><span class="comment">! 't' - total density</span></span><br><span class="line"><span class="comment">! 'a' - alpha density</span></span><br><span class="line"><span class="comment">! 'b' - beta density</span></span><br><span class="line"><span class="built_in">write</span>(*,*) mol%den_grad(x, y, z, <span class="string">'x'</span>)</span><br><span class="line"><span class="comment">! 'x' - x component of gradient</span></span><br><span class="line"><span class="comment">! 'y' - y component of gradient</span></span><br><span class="line"><span class="comment">! 'z' - z component of gradient</span></span><br><span class="line"><span class="comment">! 'm' - magnitude of gradient</span></span><br></pre></td></tr></table></figure>
+<p><h1 id="例子">例子</h1></p>
+<p><h2 id="textch_3自由基">$\text{CH}_3$自由基</h2><br><img src="../images/2019-08-05-CH3_density.png" alt=""><br>自由基所在平面上的电子密度。</p>
+<p><h2 id="texth_2分子">$\text{H}_2$分子</h2><br><img src="../images/2019-08-05-H2_density.png" alt=""><br>$\text{H}_2$沿所在轴的电子密度，注意到在核的位置电子密度梯度不连续。</p>
+<p><img src="../images/2019-08-05-H2_dengrad.png" alt=""><br>电子密度梯度的空间分布，分子所在轴为$z$轴。可以与上图电子密度的变化进行对照。</p>
+]]></content>
+      <categories>
+        <category>量子化学</category>
+      </categories>
+      <tags>
+        <tag>Fortran</tag>
+        <tag>量化编程</tag>
+        <tag>电子密度</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Ringo——我的第一个量化程序</title>
     <url>/ringo/</url>
     <content><![CDATA[<p>目前 <cite lang="en">Modern Quantum Chemistry</cite> 上氢分子和氦氢离子（HeH<sup>+</sup>）的两个例子已经学完了。</p>
@@ -68,7 +176,7 @@
 <p>当我们将120种组合的$M_L$和$M_S$都算出来后，就可绘制出$M_L$-$M_S$表格。</p>
 <p>以总自旋磁量子数为例，三个电子共有四种情况。电子的自旋全部相同以及其中一个电子与另外两个的自旋不同。所以$M_S=3/2, 1/2, -1/2, -3/2$。</p>
 <p>相应地，$M_L=5, 4, 3,\ldots,-4, -5$。我们将各个组合中具有相同$M_L$、$M_S$分别计数，便可得到该表。</p>
-<p><img src="../images/2017-08-21-2.png" alt=""></p>
+<p><img src="../images/2017-08-21-2.jpg" alt=""></p>
 <p>然后只需要一步步从表中提取出光谱项即可。</p>
 <p><img src="../images/2017-08-21-3.png" alt=""></p>
 <p>从最大的$M_L=5$开始看。$M_L$为$L$的最大值，$L$的取值范围为$0, 1,\ldots,\pm L$。而且对应的$S(M_S)=1/2, -1/2$。由此我们可推断出该组态有一$^2\text{H}$的光谱项。</p>
@@ -80,7 +188,7 @@
 <h1 id="thread">代码的思路</h1>
 
 <p>我是用Fortran写的这个程序。下面主要介绍代码的思路。</p>
-<p>代码运行示例：<br><img src="../images/2017-08-21-5.png" alt=""></p>
+<p>代码运行示例：<br><img src="../images/2017-08-21-5.jpg" alt=""></p>
 <p>我目前是实现了d轨道任意个同科电子组态的光谱项的辅助程序。不过将其推广至p、f、g轨道的难度都不大，就不细讲了。</p>
 <p>d轨道共有10个自旋轨道，所以声明了两个含有10个元素的数组分别储存各自旋轨道的磁量子数和自旋磁量子数。</p>
 <p>电子数是由用户输入的，然后依次列举所有的自旋轨道的组合并计算$M_L$和$M_S$并分别储存在两个数组中。这里需要注意，由于电子数并非事先写在程序中，所以列举组合的部分无法直接使用嵌套的循环来做到。这里使用的是一个利用递归的子程序来实现的。</p>
@@ -90,7 +198,7 @@
 <p>Update(2017/8/30):将程序功能拓展了，现在可以处理不同角量子数的电子组态，如$({\rm s})^1({\rm p})^2({\rm d})^2$这样的组态。但无法处理如$(2{\rm p})^2(3{\rm p})^2$这一类的组态。</p>
 <p>运行示例：<br><img src="../images/2017-8-30-1.png" alt=""></p>
 <p>关于直接输出光谱项的功能的实现</p>
-<p>由于直接对输出的表格进行操作很麻烦，而且也不必要（因为对整个表格操作需要的循环实现困难，而且表无论是行还是列都是对称的）。所以为了实现该功能，我首先取原有的表格的左上部分单独存为一个如图所示的二维数组。<br><img src="../images/2017-8-30-1.png" alt=""></p>
+<p>由于直接对输出的表格进行操作很麻烦，而且也不必要（因为对整个表格操作需要的循环实现困难，而且表无论是行还是列都是对称的）。所以为了实现该功能，我首先取原有的表格的左上部分单独存为一个如图所示的二维数组。<br><img src="../images/2017-10-6-2.png" alt=""></p>
 <p>之后检查第一行各列的数字$n$，若为零，则跳过；若非零，则根据其对应的总角量子数$L$和总自旋角量子数$S$得到其光谱项（若不为1，输出的光谱项后会有类似 <code>&#60;n&#62;</code> 的标记，表明该光谱项的数目为$n$），之后的各行与各列都减去$n$。一行结束后，进入下一行，重复以上的步骤。（没看明白的话，可以按照第一节的例子跟着手算一下）</p>
 <p>最终得到的结果是<br><img src="../images/2017-10-6.png" alt=""></p>
 <h1 id="further_development">进一步改进</h1>
@@ -100,13 +208,10 @@
 <p>至于为什么不直接输出所有的光谱项，很简单，我还没想出来怎么实现……</p>
 <p>所以目前这都只能算是一个求光谱项的辅助程序。不过我还是挺高兴能写出这么一个玩意的。</p>
 <h1 id="final_version">最终版本</h1>
-Update(2019/7/16): <del>最终版本之再也不改了</del>
 
-进一步学习了Fortran的指针和面向对象编程后，实现了多个相同壳层作为输入的功能。并且把原来的代码几乎重写了一遍。我用gfortran 8编译通过，在gfortran 7上应该也能编译（Intel Visual Fortran肯定也没问题）。代码可以在<a href="https://github.com/St-Maxwell/TermSymbolProgram" target="_blank" rel="noopener">GitHub</a>下载到，没有提供可执行文件（因为之前编译的程序在我现在的电脑上都运行不了，没有安装IVF）。当然如果你不想自己编译的话，我还是可以提供编译好的程序。
-
-以下是运行的例子。
-![](../images/2019-07-16_21-37-51.png)
-
+<p>Update(2019/7/16): <del>最终版本之再也不改了</del></p>
+<p>进一步学习了Fortran的指针和面向对象编程后，实现了多个相同壳层作为输入的功能。并且把原来的代码几乎重写了一遍。我用gfortran 8编译通过，在gfortran 7上应该也能编译（Intel Visual Fortran肯定也没问题）。代码可以在<a href="https://github.com/St-Maxwell/TermSymbolProgram" target="_blank" rel="noopener">GitHub</a>下载到，没有提供可执行文件（因为之前编译的程序在我现在的电脑上都运行不了，没有安装IVF）。当然如果你不想自己编译的话，我还是可以提供编译好的程序。</p>
+<p>以下是运行的例子。<br><img src="../images/2019-07-16_21-37-51.png" alt=""></p>
 <h1 id="references">参考文献</h1>
 
 <ol>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/my_icon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/my_icon.png">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":20,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="最近在看密度泛函的书，于是就想自己写一个能计算电子密度的程序，这样就可以具体地了解一些体系。而且由于更早一些时候才正经学了基组的知识，想弄清楚怎么把市面上的基组放在程序中使用（之前写HF程序用的是STO-3G，不涉及到分裂价层，而且没有涉及更多的壳层）。所以写这么一个程序还是可以帮我学到很多东西的。 代码上传到GitHub：https:&#x2F;&#x2F;github.com&#x2F;St-Maxwell&#x2F;Electro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用.fch文件计算电子密度的代码">
+<meta property="og:url" content="http://yoursite.com/calculating-electron-density-with-fch-file/index.html">
+<meta property="og:site_name" content="东方红茶馆">
+<meta property="og:description" content="最近在看密度泛函的书，于是就想自己写一个能计算电子密度的程序，这样就可以具体地了解一些体系。而且由于更早一些时候才正经学了基组的知识，想弄清楚怎么把市面上的基组放在程序中使用（之前写HF程序用的是STO-3G，不涉及到分裂价层，而且没有涉及更多的壳层）。所以写这么一个程序还是可以帮我学到很多东西的。 代码上传到GitHub：https:&#x2F;&#x2F;github.com&#x2F;St-Maxwell&#x2F;Electro">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/images/2019-08-05-CH3_density.png">
+<meta property="og:image" content="http://yoursite.com/images/2019-08-05-H2_density.png">
+<meta property="og:image" content="http://yoursite.com/images/2019-08-05-H2_dengrad.png">
+<meta property="article:published_time" content="2019-08-05T14:07:09.000Z">
+<meta property="article:modified_time" content="2020-02-10T14:26:08.967Z">
+<meta property="article:author" content="St Maxwell">
+<meta property="article:tag" content="Fortran">
+<meta property="article:tag" content="量化编程">
+<meta property="article:tag" content="电子密度">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/2019-08-05-CH3_density.png">
+
+<link rel="canonical" href="http://yoursite.com/calculating-electron-density-with-fch-file/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>利用.fch文件计算电子密度的代码 | 东方红茶馆</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">东方红茶馆</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">Scarlet Land</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/calculating-electron-density-with-fch-file/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="St Maxwell">
+      <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="东方红茶馆">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          利用.fch文件计算电子密度的代码
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-08-05 22:07:09" itemprop="dateCreated datePublished" datetime="2019-08-05T22:07:09+08:00">2019-08-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-02-10 22:26:08" itemprop="dateModified" datetime="2020-02-10T22:26:08+08:00">2020-02-10</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%87%8F%E5%AD%90%E5%8C%96%E5%AD%A6/" itemprop="url" rel="index">
+                    <span itemprop="name">量子化学</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近在看密度泛函的书，于是就想自己写一个能计算电子密度的程序，这样就可以具体地了解一些体系。而且由于更早一些时候才正经学了基组的知识，想弄清楚怎么把市面上的基组放在程序中使用（之前写HF程序用的是STO-3G，不涉及到分裂价层，而且没有涉及更多的壳层）。所以写这么一个程序还是可以帮我学到很多东西的。</p>
+<p>代码上传到GitHub：<a href="https://github.com/St-Maxwell/ElectronDensity" target="_blank">https://github.com/St-Maxwell/ElectronDensity</a></p>
+<p>参考了Sobereva的文章：<a href="http://sobereva.com/55" target="_blank">高斯fch文件与wfn波函数文件的介绍及转换方法</a>、<a href="http://sobereva.com/182" target="_blank">利用wfn文件计算电子密度的代码的编写方法</a>。<br><a id="more"></a></p>
+<h1 id="电子密度">电子密度</h1>
+在空间$\mathbf{r}$处找到任意一个电子的概率。
+
+$$ \rho(\mathbf{r}) =  N \int |\Psi(\mathbf{x}_1, \mathbf{x}_2,\ldots,\mathbf{x}_N)|^2\, d\omega_1 d\mathbf{x}_2\ldots d\mathbf{x}_N $$
+
+将上式展开为空间轨道（分子轨道）$\{\psi_a\}$，为
+
+$$ \rho(\mathbf{r}) = 2 \sum\limits_a^{N/2} |\psi_a(\mathbf{r})|^2 $$
+
+若是自然轨道，则为
+
+$$ \rho(\mathbf{r}) = \sum\limits_a^{N/2} \lambda_a |\eta_a(\mathbf{r})|^2 $$
+
+其中$\eta_a$是自然轨道，$\lambda$是自然轨道占据数。
+
+实际计算中将用一组基函数将轨道展开，则密度的表达式可写为
+
+$$ \rho(\mathbf{r}) = \sum\limits_a^{N/2} \lambda_a \left| \sum\limits_i C_{ai} \varphi_i(\mathbf{r}) \right|^2 $$
+
+$C_{ai}$是展开系数，$\lambda_a$对于分子轨道就是$2$，对于自然轨道则是非整数。
+
+基函数同样可以用一组Gaussian型函数（Gaussian Type Function，GTF）展开:
+
+$$ \varphi = \sum\limits_i a_i \chi_i^\text{GTF}(x,y,z) $$
+
+$a_i$是收缩系数，$\chi^\text{GTF}$假定是Cartesian型GTF，有如下形式
+
+$$ \chi = N x^{l_x} y^{l_y} z^{l_z} \mathrm{e}^{-\zeta r^2} $$
+
+归一化系数$N$的表达式为
+
+$$ \begin{aligned} N &= \left( \frac{2\zeta}{\pi} \right)^{3/4} \left[ \frac{(4\zeta)^{l_x+l_y+l_z}}{(2l_x-1)!!(2l_y-1)!!(2l_z-1)!!} \right]^{1/2} \\ &= \left( \frac{2\zeta}{\pi} \right)^{3/4} \left[ \frac{(8\zeta)^{l_x+l_y+l_z}l_x!l_y!l_z!}{(2l_x)!(2l_y)!(2l_z)!} \right]^{1/2} \end{aligned} $$
+
+<h2>电子密度的梯度</h2>
+电子密度的梯度为
+
+$$ \nabla \rho(\mathbf{r}) = \frac{\partial \rho(\mathbf{r})}{\partial x}\mathbf{x} + \frac{\partial \rho(\mathbf{r})}{\partial y}\mathbf{y} + \frac{\partial \rho(\mathbf{r})}{\partial z}\mathbf{z} $$
+
+以$\partial \rho/\partial x$为例：
+
+$$ \begin{aligned} \frac{\partial \rho}{\partial x} &= \frac{\partial}{\partial x} \sum\limits_a^{N/2} \lambda_a \psi_a^2(\mathbf{r}) \\ &= \sum\limits_a^{N/2} 2\lambda_a \psi_a(\mathbf{r}) \frac{\partial \psi_a(\mathbf{r})}{\partial x} \end{aligned} $$
+
+分子轨道的导数最终可以用GTF的导数的线性组合表示：
+
+$$ \frac{\partial \psi_a(\mathbf{r})}{\partial x} = \sum\limits_i C_{ai} \sum\limits_j a_{ij} \frac{\partial \chi_j(\mathbf{r})}{\partial x} $$
+
+GTF关于$x$的导数很容易得到，为
+
+$$ \frac{\partial \chi_j(\mathbf{r})}{\partial x} = (l_x x^{l_x-1} - 2\zeta x^{l_x+1}) N  y^{l_y} z^{l_z} \mathrm{e}^{-\zeta r^2} $$
+
+梯度的模
+
+$$ |\nabla \rho| = \sqrt{\bigg(\frac{\partial \rho}{\partial x}\bigg)^2 + \bigg(\frac{\partial \rho}{\partial y}\bigg)^2 + \bigg(\frac{\partial \rho}{\partial z}\bigg)^2} $$
+
+<h1 id="需要从.fch文件读取的量">需要从.fch文件读取的量</h1>
+波函数类型
+如果是自然轨道，需要手动将<code>.fch</code>文件第一行内容改为<code>isNO</code>；
+从第二行确定波函数为<code>R</code>、<code>U</code>、<code>RO</code>。若使用的方法首字母为O，且为闭壳层的情况，会误认为波函数为<code>RO</code>，虽然并不影响密度的计算。
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">SP        RB3LYP                                   6-31G(d,p)</span><br><span class="line">电子数</span><br><span class="line">Number of electrons                        I               10</span><br><span class="line">Number of alpha electrons                  I                5</span><br><span class="line">Number of beta electrons                   I                5</span><br><span class="line">基函数数目</span><br><span class="line">Number of basis functions                  I               25</span><br><span class="line">收缩壳层数目</span><br><span class="line">Number of contracted shells                I               10</span><br><span class="line">原函数数目</span><br><span class="line">Number of primitive shells                 I               21</span><br><span class="line">壳层类型</span><br><span class="line">Shell types                                I   N&#x3D;          10</span><br><span class="line">每个壳层的收缩度</span><br><span class="line">Number of primitives per shell             I   N&#x3D;          10</span><br><span class="line">原函数的指数</span><br><span class="line">Primitive exponents                        R   N&#x3D;          21</span><br><span class="line">原函数收缩系数</span><br><span class="line">Contraction coefficients                   R   N&#x3D;          21</span><br><span class="line">原函数收缩系数（sp(p)型函数）</span><br><span class="line">P(S&#x3D;P) Contraction coefficients            R   N&#x3D;          21</span><br><span class="line">基函数坐标</span><br><span class="line">Coordinates of each shell                  R   N&#x3D;          30</span><br><span class="line">分子轨道系数</span><br><span class="line">Alpha MO coefficients                      R   N&#x3D;         625</span><br><span class="line">对于自然轨道，这一部分数据实际上是轨道占据数</span><br><span class="line">Alpha Orbital Energies                     R   N&#x3D;          25</span><br></pre></td></tr></table></figure>
+
+<h1 id="fch文件波函数类型">.fch文件波函数类型</h1>
+<h2 id="gaussian">Gaussian</h2>
+<ul>
+<li>限制性分子轨道
+<ul>
+<li>闭壳层：默认即可</li>
+<li>限制性开壳层：<code>RO</code></li>
+</ul></li>
+<li>非限制性分子轨道
+<ul>
+<li>开壳层：默认即可</li>
+<li>自旋极化单重态：<code>UHF/DFT guess=mix</code></li>
+</ul></li>
+<li>自然轨道
+<ul>
+<li><code>density=current</code> + <code>guess(save,only,naturalorbitals) chkbasis</code></li>
+<li>限制性闭壳层：默认</li>
+<li>非限制性开壳层：默认</li>
+<li>限制性开壳层：不支持（<code>RO</code>后HF都没有解析梯度）</li>
+<li>自旋极化单重态：以<code>UHF/DFT guess=mix</code>作为参考态</li>
+<li>Gaussian输出的.fch中，自然轨道不包含自旋信息，其占据数为$0 \text{--} 2$。虽然会输出<code>beta</code>轨道信息，但实际上和<code>alpha</code>轨道的信息一模一样。</li>
+</ul></li>
+</ul>
+
+<h1>用法</h1>
+
+<figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">use</span> m_basis_func</span><br><span class="line"><span class="keyword">use</span> m_routines</span><br><span class="line"><span class="keyword">type</span>(molecule) :: mol</span><br><span class="line"><span class="keyword">integer</span> :: iounit</span><br><span class="line"><span class="keyword">character</span>(len=<span class="number">80</span>) filename</span><br><span class="line"><span class="keyword">real</span>(<span class="keyword">kind</span>=<span class="number">8</span>) :: x, y, z</span><br><span class="line"></span><br><span class="line"><span class="comment">! read .fch file</span></span><br><span class="line"><span class="built_in">write</span>(*,*) <span class="string">"Input .fch file"</span></span><br><span class="line">read(*,*) filename</span><br><span class="line">open(<span class="keyword">newunit</span>=iounit, <span class="keyword">file</span>=filename, <span class="keyword">status</span>=<span class="string">'old'</span>, <span class="keyword">action</span>=<span class="string">'read'</span>)</span><br><span class="line"><span class="keyword">call</span> read_basis_func(iounit, mol)</span><br><span class="line"><span class="keyword">call</span> read_mo_coeff(iounit, mol)</span><br><span class="line">close(iounit)</span><br><span class="line"></span><br><span class="line"><span class="built_in">write</span>(*,*) mol%density(x, y, z, <span class="string">'t'</span>)</span><br><span class="line"><span class="comment">! 't' - total density</span></span><br><span class="line"><span class="comment">! 'a' - alpha density</span></span><br><span class="line"><span class="comment">! 'b' - beta density</span></span><br><span class="line"><span class="built_in">write</span>(*,*) mol%den_grad(x, y, z, <span class="string">'x'</span>)</span><br><span class="line"><span class="comment">! 'x' - x component of gradient</span></span><br><span class="line"><span class="comment">! 'y' - y component of gradient</span></span><br><span class="line"><span class="comment">! 'z' - z component of gradient</span></span><br><span class="line"><span class="comment">! 'm' - magnitude of gradient</span></span><br></pre></td></tr></table></figure>
+<p><h1 id="例子">例子</h1></p>
+<p><h2 id="textch_3自由基">$\text{CH}_3$自由基</h2><br><img src="../images/2019-08-05-CH3_density.png" alt=""><br>自由基所在平面上的电子密度。</p>
+<p><h2 id="texth_2分子">$\text{H}_2$分子</h2><br><img src="../images/2019-08-05-H2_density.png" alt=""><br>$\text{H}_2$沿所在轴的电子密度，注意到在核的位置电子密度梯度不连续。</p>
+<p><img src="../images/2019-08-05-H2_dengrad.png" alt=""><br>电子密度梯度的空间分布，分子所在轴为$z$轴。可以与上图电子密度的变化进行对照。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Fortran/" rel="tag"># Fortran</a>
+              <a href="/tags/%E9%87%8F%E5%8C%96%E7%BC%96%E7%A8%8B/" rel="tag"># 量化编程</a>
+              <a href="/tags/%E7%94%B5%E5%AD%90%E5%AF%86%E5%BA%A6/" rel="tag"># 电子密度</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/ringo/" rel="prev" title="Ringo——我的第一个量化程序">
+      <i class="fa fa-chevron-left"></i> Ringo——我的第一个量化程序
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/use-libcint/" rel="next" title="电子积分库Libcint的用法">
+      电子积分库Libcint的用法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#电子密度"><span class="nav-number">1.</span> <span class="nav-text">电子密度</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#null"><span class="nav-number">1.1.</span> <span class="nav-text">电子密度的梯度</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#需要从.fch文件读取的量"><span class="nav-number">2.</span> <span class="nav-text">需要从.fch文件读取的量</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fch文件波函数类型"><span class="nav-number">3.</span> <span class="nav-text">.fch文件波函数类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#gaussian"><span class="nav-number">3.1.</span> <span class="nav-text">Gaussian</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#null"><span class="nav-number">4.</span> <span class="nav-text">用法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#例子"><span class="nav-number">5.</span> <span class="nav-text">例子</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#textch_3自由基"><span class="nav-number">5.1.</span> <span class="nav-text">$\text{CH}_3$自由基</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#texth_2分子"><span class="nav-number">5.2.</span> <span class="nav-text">$\text{H}_2$分子</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="St Maxwell"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">St Maxwell</p>
+  <div class="site-description" itemprop="description">PhD Student in Theoretical and Computational Chemistry at Xiamen University</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/St-Maxwell" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;St-Maxwell" rel="noopener" target="_blank">GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/st__maxwell" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;st__maxwell" rel="noopener" target="_blank">Twitter</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/st_maxwell" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;st_maxwell" rel="noopener" target="_blank">知乎</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://sobereva.com/" title="http:&#x2F;&#x2F;sobereva.com&#x2F;" rel="noopener" target="_blank">思想家公社的门口</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://carbenium.fun/" title="http:&#x2F;&#x2F;carbenium.fun&#x2F;" rel="noopener" target="_blank">十年夜雨十年灯</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">St Maxwell</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<script type="text/x-mathjax-config">
+    MathJax.Ajax.config.path['mhchem'] = '//cdn.jsdelivr.net/npm/mathjax-mhchem@3';
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        extensions: ['[mhchem]/mhchem.js'],
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script>
+<script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script>
+
+    
+
+  
+
+</body>
+</html>

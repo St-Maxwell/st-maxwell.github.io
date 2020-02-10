@@ -26,15 +26,16 @@
 <meta property="og:description" content="表格法求光谱项的原理 代码的思路 进一步改进 最终版本 参考文献   Update(2017&#x2F;10&#x2F;6):该程序终于实现了直接输出光谱项的功能，因此将文章的标题和链接都修改为「求解电子光谱项的程序」。 求原子光谱项有很多种方法，这里只介绍一种思路简单粗暴的方法。某种程度上可称为是逐一枚举的方法。（等你看完说不定会觉得这个方法很low23333） 其实该方法也可看作是结构化学教科书上讲解两个同科电">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://yoursite.com/images/2017-08-21-1.png">
-<meta property="og:image" content="http://yoursite.com/images/2017-08-21-2.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-2.jpg">
 <meta property="og:image" content="http://yoursite.com/images/2017-08-21-3.png">
 <meta property="og:image" content="http://yoursite.com/images/2017-08-21-4.png">
-<meta property="og:image" content="http://yoursite.com/images/2017-08-21-5.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-5.jpg">
 <meta property="og:image" content="http://yoursite.com/images/2017-8-30-1.png">
-<meta property="og:image" content="http://yoursite.com/images/2017-8-30-1.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-10-6-2.png">
 <meta property="og:image" content="http://yoursite.com/images/2017-10-6.png">
+<meta property="og:image" content="http://yoursite.com/images/2019-07-16_21-37-51.png">
 <meta property="article:published_time" content="2017-08-21T15:01:06.000Z">
-<meta property="article:modified_time" content="2020-02-10T13:34:18.501Z">
+<meta property="article:modified_time" content="2020-02-10T14:30:42.131Z">
 <meta property="article:author" content="St Maxwell">
 <meta property="article:tag" content="Fortran">
 <meta property="article:tag" content="光谱项">
@@ -196,7 +197,7 @@
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E6%B1%82%E8%A7%A3%E7%94%B5%E5%AD%90%E5%85%89%E8%B0%B1%E9%A1%B9%E7%9A%84%E7%A8%8B%E5%BA%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="image" content="/images/avatar.jpg">
       <meta itemprop="name" content="St Maxwell">
       <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
     </span>
@@ -223,7 +224,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-10 21:34:18" itemprop="dateModified" datetime="2020-02-10T21:34:18+08:00">2020-02-10</time>
+                <time title="修改时间：2020-02-10 22:30:42" itemprop="dateModified" datetime="2020-02-10T22:30:42+08:00">2020-02-10</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -272,7 +273,7 @@
 <p>当我们将120种组合的$M_L$和$M_S$都算出来后，就可绘制出$M_L$-$M_S$表格。</p>
 <p>以总自旋磁量子数为例，三个电子共有四种情况。电子的自旋全部相同以及其中一个电子与另外两个的自旋不同。所以$M_S=3/2, 1/2, -1/2, -3/2$。</p>
 <p>相应地，$M_L=5, 4, 3,\ldots,-4, -5$。我们将各个组合中具有相同$M_L$、$M_S$分别计数，便可得到该表。</p>
-<p><img src="../images/2017-08-21-2.png" alt=""></p>
+<p><img src="../images/2017-08-21-2.jpg" alt=""></p>
 <p>然后只需要一步步从表中提取出光谱项即可。</p>
 <p><img src="../images/2017-08-21-3.png" alt=""></p>
 <p>从最大的$M_L=5$开始看。$M_L$为$L$的最大值，$L$的取值范围为$0, 1,\ldots,\pm L$。而且对应的$S(M_S)=1/2, -1/2$。由此我们可推断出该组态有一$^2\text{H}$的光谱项。</p>
@@ -284,7 +285,7 @@
 <h1 id="thread">代码的思路</h1>
 
 <p>我是用Fortran写的这个程序。下面主要介绍代码的思路。</p>
-<p>代码运行示例：<br><img src="../images/2017-08-21-5.png" alt=""></p>
+<p>代码运行示例：<br><img src="../images/2017-08-21-5.jpg" alt=""></p>
 <p>我目前是实现了d轨道任意个同科电子组态的光谱项的辅助程序。不过将其推广至p、f、g轨道的难度都不大，就不细讲了。</p>
 <p>d轨道共有10个自旋轨道，所以声明了两个含有10个元素的数组分别储存各自旋轨道的磁量子数和自旋磁量子数。</p>
 <p>电子数是由用户输入的，然后依次列举所有的自旋轨道的组合并计算$M_L$和$M_S$并分别储存在两个数组中。这里需要注意，由于电子数并非事先写在程序中，所以列举组合的部分无法直接使用嵌套的循环来做到。这里使用的是一个利用递归的子程序来实现的。</p>
@@ -294,7 +295,7 @@
 <p>Update(2017/8/30):将程序功能拓展了，现在可以处理不同角量子数的电子组态，如$({\rm s})^1({\rm p})^2({\rm d})^2$这样的组态。但无法处理如$(2{\rm p})^2(3{\rm p})^2$这一类的组态。</p>
 <p>运行示例：<br><img src="../images/2017-8-30-1.png" alt=""></p>
 <p>关于直接输出光谱项的功能的实现</p>
-<p>由于直接对输出的表格进行操作很麻烦，而且也不必要（因为对整个表格操作需要的循环实现困难，而且表无论是行还是列都是对称的）。所以为了实现该功能，我首先取原有的表格的左上部分单独存为一个如图所示的二维数组。<br><img src="../images/2017-8-30-1.png" alt=""></p>
+<p>由于直接对输出的表格进行操作很麻烦，而且也不必要（因为对整个表格操作需要的循环实现困难，而且表无论是行还是列都是对称的）。所以为了实现该功能，我首先取原有的表格的左上部分单独存为一个如图所示的二维数组。<br><img src="../images/2017-10-6-2.png" alt=""></p>
 <p>之后检查第一行各列的数字$n$，若为零，则跳过；若非零，则根据其对应的总角量子数$L$和总自旋角量子数$S$得到其光谱项（若不为1，输出的光谱项后会有类似 <code>&#60;n&#62;</code> 的标记，表明该光谱项的数目为$n$），之后的各行与各列都减去$n$。一行结束后，进入下一行，重复以上的步骤。（没看明白的话，可以按照第一节的例子跟着手算一下）</p>
 <p>最终得到的结果是<br><img src="../images/2017-10-6.png" alt=""></p>
 <h1 id="further_development">进一步改进</h1>
@@ -304,13 +305,10 @@
 <p>至于为什么不直接输出所有的光谱项，很简单，我还没想出来怎么实现……</p>
 <p>所以目前这都只能算是一个求光谱项的辅助程序。不过我还是挺高兴能写出这么一个玩意的。</p>
 <h1 id="final_version">最终版本</h1>
-Update(2019/7/16): <del>最终版本之再也不改了</del>
 
-进一步学习了Fortran的指针和面向对象编程后，实现了多个相同壳层作为输入的功能。并且把原来的代码几乎重写了一遍。我用gfortran 8编译通过，在gfortran 7上应该也能编译（Intel Visual Fortran肯定也没问题）。代码可以在<a href="https://github.com/St-Maxwell/TermSymbolProgram" target="_blank" rel="noopener">GitHub</a>下载到，没有提供可执行文件（因为之前编译的程序在我现在的电脑上都运行不了，没有安装IVF）。当然如果你不想自己编译的话，我还是可以提供编译好的程序。
-
-以下是运行的例子。
-![](../images/2019-07-16_21-37-51.png)
-
+<p>Update(2019/7/16): <del>最终版本之再也不改了</del></p>
+<p>进一步学习了Fortran的指针和面向对象编程后，实现了多个相同壳层作为输入的功能。并且把原来的代码几乎重写了一遍。我用gfortran 8编译通过，在gfortran 7上应该也能编译（Intel Visual Fortran肯定也没问题）。代码可以在<a href="https://github.com/St-Maxwell/TermSymbolProgram" target="_blank" rel="noopener">GitHub</a>下载到，没有提供可执行文件（因为之前编译的程序在我现在的电脑上都运行不了，没有安装IVF）。当然如果你不想自己编译的话，我还是可以提供编译好的程序。</p>
+<p>以下是运行的例子。<br><img src="../images/2019-07-16_21-37-51.png" alt=""></p>
 <h1 id="references">参考文献</h1>
 
 <ol>
@@ -407,6 +405,8 @@ Update(2019/7/16): <del>最终版本之再也不改了</del>
 
       <div class="site-overview-wrap sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="St Maxwell"
+      src="/images/avatar.jpg">
   <p class="site-author-name" itemprop="name">St Maxwell</p>
   <div class="site-description" itemprop="description">PhD Student in Theoretical and Computational Chemistry at Xiamen University</div>
 </div>
@@ -415,7 +415,7 @@ Update(2019/7/16): <del>最终版本之再也不改了</del>
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-count">6</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -428,7 +428,7 @@ Update(2019/7/16): <del>最终版本之再也不改了</del>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
