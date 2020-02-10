@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/my_icon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/my_icon.png">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":20,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="libcint是Sun Qiming写的电子积分库，有Fortran接口。我想以后使用它写点小玩意。现在先尝试搞懂它的用法，并分享自己的一点经验。 当然最重要的是看libcint自己的手册（和GitHub仓库里的例子），然后可以参考这篇文章：Libcint电子积分库使用教程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="电子积分库Libcint的用法">
+<meta property="og:url" content="http://yoursite.com/use-libcint/index.html">
+<meta property="og:site_name" content="东方红茶馆">
+<meta property="og:description" content="libcint是Sun Qiming写的电子积分库，有Fortran接口。我想以后使用它写点小玩意。现在先尝试搞懂它的用法，并分享自己的一点经验。 当然最重要的是看libcint自己的手册（和GitHub仓库里的例子），然后可以参考这篇文章：Libcint电子积分库使用教程">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-09T16:18:57.000Z">
+<meta property="article:modified_time" content="2020-02-10T04:42:21.593Z">
+<meta property="article:author" content="St Maxwell">
+<meta property="article:tag" content="Fortran">
+<meta property="article:tag" content="量化编程">
+<meta property="article:tag" content="Libcint">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://yoursite.com/use-libcint/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>电子积分库Libcint的用法 | 东方红茶馆</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">东方红茶馆</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">Scarlet Land</p>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/use-libcint/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="St Maxwell">
+      <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="东方红茶馆">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          电子积分库Libcint的用法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-10 00:18:57 / 修改时间：12:42:21" itemprop="dateCreated datePublished" datetime="2020-02-10T00:18:57+08:00">2020-02-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E9%87%8F%E5%AD%90%E5%8C%96%E5%AD%A6/" itemprop="url" rel="index">
+                    <span itemprop="name">量子化学</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><a href="https://github.com/sunqm/libcint" target="_blank" rel="noopener">libcint</a>是Sun Qiming写的电子积分库，有Fortran接口。我想以后使用它写点小玩意。现在先尝试搞懂它的用法，并分享自己的一点经验。</p>
+<p>当然最重要的是看libcint自己的手册（和GitHub仓库里的例子），然后可以参考这篇文章：<a href="https://mp.weixin.qq.com/s/AULtH_7iPnaA8g5y46T_HQ" target="_blank" rel="noopener">Libcint电子积分库使用教程</a><br><a id="more"></a><br>计算积分前要先将每一个primitive Gaussian函数（直接从基组文件里读取的）归一化，然后将重叠矩阵的对角元归一化。</p>
+<p>调用<code>CINTgto_norm</code>函数，它接受primitive Gaussian函数的总角动量<code>angl</code>（笛卡尔型Gaussian函数的总角动量$l=l_x+l_y+l_z$）和指数项<code>expnt</code>（$\alpha$）。乘到primitive Gaussian函数对应的收缩系数<code>cntr_coeff</code>即可。<br><figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cntr_coeff = cntr_coeff * CINTgto_norm(angl, expnt)</span><br></pre></td></tr></table></figure></p>
+<p>我写了一个简单的测试（比较随意，有些地方是写死的），计算了水分子的def2-SVP基组的电子积分。</p>
+<figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">module</span> mod_info</span><br><span class="line">    <span class="keyword">use</span> <span class="keyword">iso_fortran_env</span>, <span class="keyword">only</span>: r8 =&gt; real64</span><br><span class="line">    <span class="keyword">implicit</span> <span class="keyword">none</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">! molecule: water</span></span><br><span class="line">    <span class="comment">! basis set: def2-SVP</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: natm = <span class="number">3</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: nshl = <span class="number">12</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: nprm = <span class="number">22</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: nbas = <span class="number">24</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(nshl), <span class="keyword">parameter</span> :: cntr_odr = &amp;</span><br><span class="line">    [<span class="number">5</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">3</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">3</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">3</span>,<span class="number">1</span>,<span class="number">1</span>]</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(nshl), <span class="keyword">parameter</span> :: angl = &amp;</span><br><span class="line">    [<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span>]</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(nshl), <span class="keyword">parameter</span> :: shl_belong_to_atom = &amp;</span><br><span class="line">    [<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">2</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">3</span>,<span class="number">3</span>]</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(nshl), <span class="keyword">parameter</span> :: sh_indx = &amp;</span><br><span class="line">    [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">7</span>,<span class="number">10</span>,<span class="number">15</span>,<span class="number">16</span>,<span class="number">17</span>,<span class="number">20</span>,<span class="number">21</span>,<span class="number">22</span>]</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(nprm), <span class="keyword">parameter</span> :: expnt = &amp;</span><br><span class="line">    [ <span class="number">2266.1767785</span>, <span class="number">340.87010191</span>, <span class="number">77.363135167</span>, &amp;</span><br><span class="line">      <span class="number">21.479644940</span>, <span class="number">6.6589433124</span>, <span class="number">0.80975975668</span>, &amp;</span><br><span class="line">      <span class="number">0.25530772234</span>, <span class="number">17.721504317</span>, <span class="number">3.8635505440</span>, &amp;</span><br><span class="line">      <span class="number">1.0480920883</span>, <span class="number">0.27641544411</span>, <span class="number">1.2000000</span>, &amp;</span><br><span class="line">      <span class="number">13.0107010</span>, <span class="number">1.9622572</span>, <span class="number">0.44453796</span>, &amp;</span><br><span class="line">      <span class="number">0.12194962</span>, <span class="number">0.8000000</span>, <span class="number">13.0107010</span>, &amp;</span><br><span class="line">      <span class="number">1.9622572</span>, <span class="number">0.44453796</span>, <span class="number">0.12194962</span>, &amp;</span><br><span class="line">      <span class="number">0.8000000</span> ]</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(nprm), <span class="keyword">parameter</span> :: coeff = &amp;</span><br><span class="line">    [ -<span class="number">0.53431809926E-02</span>, -<span class="number">0.39890039230E-01</span>, -<span class="number">0.17853911985</span>, &amp;</span><br><span class="line">      -<span class="number">0.46427684959</span>, -<span class="number">0.44309745172</span>, <span class="number">1.0000000</span>, &amp;</span><br><span class="line">      <span class="number">1.0000000</span>, <span class="number">0.43394573193E-01</span>, <span class="number">0.23094120765</span>, &amp;</span><br><span class="line">      <span class="number">0.51375311064</span>, <span class="number">1.0000000</span>, <span class="number">1.0000000</span>, &amp;</span><br><span class="line">      <span class="number">0.19682158E-01</span>, <span class="number">0.13796524</span>, <span class="number">0.47831935</span>, &amp;</span><br><span class="line">      <span class="number">1.0000000</span>, <span class="number">1.0000000</span>, <span class="number">0.19682158E-01</span>, &amp;</span><br><span class="line">      <span class="number">0.13796524</span>, <span class="number">0.47831935</span>, <span class="number">1.0000000</span>, &amp;</span><br><span class="line">      <span class="number">1.0000000</span> ]</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(<span class="number">3</span>,natm), <span class="keyword">parameter</span> :: geom = <span class="built_in">reshape</span>(&amp;</span><br><span class="line">    [ <span class="number">0.00000000</span>, -<span class="number">0.00000000</span>, -<span class="number">0.11085125</span>, &amp;</span><br><span class="line">      <span class="number">0.00000000</span>, -<span class="number">0.78383672</span>, <span class="number">0.44340501</span>, &amp;</span><br><span class="line">      <span class="number">0.00000000</span>, <span class="number">0.78383672</span>, <span class="number">0.44340501</span> ], [<span class="number">3</span>,natm])</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(natm), <span class="keyword">parameter</span> :: charge = [<span class="number">8</span>,<span class="number">1</span>,<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">module</span> mod_info</span><br><span class="line"></span><br><span class="line"><span class="keyword">module</span> mod_libcint</span><br><span class="line">    <span class="keyword">use</span> mod_info</span><br><span class="line">    <span class="keyword">implicit</span> <span class="keyword">none</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(:,:), <span class="keyword">allocatable</span> :: atm</span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(:,:), <span class="keyword">allocatable</span> :: bas</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(:), <span class="keyword">allocatable</span> :: env</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: CHARGE_OF  = <span class="number">1</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: PTR_COORD  = <span class="number">2</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: NUC_MOD_OF = <span class="number">3</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: PTR_ZETA   = <span class="number">4</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: ATM_SLOTS  = <span class="number">6</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: ATOM_OF    = <span class="number">1</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: ANG_OF     = <span class="number">2</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: NPRIM_OF   = <span class="number">3</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: NCTR_OF    = <span class="number">4</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: KAPPA_OF   = <span class="number">5</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: PTR_EXP    = <span class="number">6</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: PTR_COEFF  = <span class="number">7</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: BAS_SLOTS  = <span class="number">8</span></span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">parameter</span> :: PTR_ENV_START = <span class="number">20</span></span><br><span class="line">  </span><br><span class="line"><span class="keyword">contains</span></span><br><span class="line">  </span><br><span class="line">    <span class="function"><span class="keyword">subroutine</span></span> set_libcint_input()</span><br><span class="line">        <span class="keyword">integer</span> :: off, prim_off</span><br><span class="line">        <span class="keyword">integer</span> :: iatom, ishl, iprim, ioff</span><br><span class="line">        <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">external</span> :: CINTgto_norm</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">allocate</span>(atm(ATM_SLOTS,natm))</span><br><span class="line">        <span class="built_in">allocate</span>(bas(BAS_SLOTS,nshl))</span><br><span class="line">        <span class="built_in">allocate</span>(env(PTR_ENV_START+<span class="number">3</span>*natm+<span class="number">2</span>*nprm))</span><br><span class="line">  </span><br><span class="line">        off = PTR_ENV_START</span><br><span class="line">        <span class="keyword">do</span> iatom = <span class="number">1</span>, natm</span><br><span class="line">            atm(CHARGE_OF,iatom) = charge(iatom)</span><br><span class="line">            atm(PTR_COORD,iatom) = off</span><br><span class="line">            atm(NUC_MOD_OF,iatom) = <span class="number">1</span></span><br><span class="line">            env(off+<span class="number">1</span>:) = geom(:,iatom)</span><br><span class="line">            off = off + <span class="number">3</span></span><br><span class="line">        <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">        prim_off = <span class="number">1</span></span><br><span class="line">        <span class="keyword">do</span> ishl = <span class="number">1</span>, nshl</span><br><span class="line">            bas(ATOM_OF,ishl) = shl_belong_to_atom(ishl) - <span class="number">1</span></span><br><span class="line">            bas(ANG_OF,ishl) = angl(ishl)</span><br><span class="line">            bas(NPRIM_OF,ishl) = cntr_odr(ishl)</span><br><span class="line">            bas(NCTR_OF,ishl) = <span class="number">1</span></span><br><span class="line">  </span><br><span class="line">            bas(PTR_EXP,ishl) = off</span><br><span class="line">            ioff = <span class="number">0</span></span><br><span class="line">            <span class="keyword">do</span> iprim = prim_off, prim_off + cntr_odr(ishl)-<span class="number">1</span></span><br><span class="line">                env(off+<span class="number">1</span>+ioff) = expnt(iprim)</span><br><span class="line">                ioff = ioff + <span class="number">1</span></span><br><span class="line">            <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">            off = off + cntr_odr(ishl)</span><br><span class="line">  </span><br><span class="line">            bas(PTR_COEFF,ishl) = off</span><br><span class="line">            ioff = <span class="number">0</span></span><br><span class="line">            <span class="keyword">do</span> iprim = prim_off, prim_off + cntr_odr(ishl)-<span class="number">1</span></span><br><span class="line">                env(off+<span class="number">1</span>+ioff) = coeff(iprim) * CINTgto_norm(angl(ishl), expnt(iprim))</span><br><span class="line">                ioff = ioff + <span class="number">1</span></span><br><span class="line">            <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">            off = off + cntr_odr(ishl)</span><br><span class="line">  </span><br><span class="line">            prim_off = prim_off + cntr_odr(ishl)</span><br><span class="line">        <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">end</span> <span class="function"><span class="keyword">subroutine</span></span> set_libcint_input</span><br><span class="line">  </span><br><span class="line">    <span class="function"><span class="keyword">subroutine</span></span> normalize()</span><br><span class="line">        <span class="keyword">integer</span> :: ishl, iprim</span><br><span class="line">        <span class="keyword">integer</span> :: di, dj</span><br><span class="line">        <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(:,:), <span class="keyword">allocatable</span> :: buf1e</span><br><span class="line">        <span class="keyword">integer</span>, <span class="keyword">dimension</span>(<span class="number">2</span>) :: shls</span><br><span class="line">        <span class="keyword">integer</span>, <span class="keyword">external</span> :: CINTcgto_spheric</span><br><span class="line">  </span><br><span class="line">        <span class="keyword">do</span> ishl = <span class="number">1</span>, nshl</span><br><span class="line">            shls(<span class="number">1</span>) = ishl - <span class="number">1</span></span><br><span class="line">            shls(<span class="number">2</span>) = ishl - <span class="number">1</span></span><br><span class="line">            di = CINTcgto_spheric(ishl-<span class="number">1</span>, bas)</span><br><span class="line">            dj = CINTcgto_spheric(ishl-<span class="number">1</span>, bas)</span><br><span class="line">            <span class="built_in">allocate</span>(buf1e(di,dj))</span><br><span class="line">            <span class="keyword">call</span> cint1e_ovlp_sph(buf1e,shls,atm,natm,bas,nshl,env)</span><br><span class="line">            <span class="keyword">do</span> iprim = <span class="number">1</span>, cntr_odr(ishl)</span><br><span class="line">                env(bas(PTR_COEFF,ishl)+iprim) = env(bas(PTR_COEFF,ishl)+iprim) / <span class="built_in">sqrt</span>(buf1e(<span class="number">1</span>,<span class="number">1</span>))</span><br><span class="line">            <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">            <span class="built_in">deallocate</span>(buf1e)</span><br><span class="line">        <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">end</span> <span class="function"><span class="keyword">subroutine</span></span> normalize</span><br><span class="line"></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">module</span> mod_libcint</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">program</span></span> main</span><br><span class="line">    <span class="keyword">use</span> mod_info</span><br><span class="line">    <span class="keyword">use</span> mod_libcint</span><br><span class="line">    <span class="keyword">implicit</span> <span class="keyword">none</span></span><br><span class="line">    <span class="keyword">integer</span> :: i, j, k, l, di, dj, dk, dl, x, y, z, w</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(nbas,nbas) :: S</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(nbas,nbas) :: T</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(nbas,nbas) :: V</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(nbas,nbas,nbas,nbas) :: eri</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(:,:), <span class="keyword">allocatable</span> :: buf1e</span><br><span class="line">    <span class="keyword">real</span>(<span class="keyword">kind</span>=r8), <span class="keyword">dimension</span>(:,:,:,:), <span class="keyword">allocatable</span> :: buf2e</span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">dimension</span>(<span class="number">4</span>) :: shls</span><br><span class="line">    <span class="keyword">integer</span>, <span class="keyword">external</span> :: CINTcgto_spheric</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">call</span> set_libcint_input()</span><br><span class="line">    <span class="keyword">call</span> normalize()</span><br><span class="line">  </span><br><span class="line">    open(<span class="number">11</span>, <span class="keyword">file</span>=<span class="string">"int.txt"</span>)</span><br><span class="line">    <span class="built_in">write</span>(<span class="number">11</span>,*) atm(CHARGE_OF,:) </span><br><span class="line">    <span class="built_in">write</span>(<span class="number">11</span>,*) atm(PTR_COORD,:) </span><br><span class="line">    <span class="built_in">write</span>(<span class="number">11</span>,*) atm(NUC_MOD_OF,:)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nshl</span><br><span class="line">        <span class="built_in">write</span>(<span class="number">11</span>,<span class="string">"(*(I4))"</span>) bas(ATOM_OF,i), bas(ANG_OF,i), bas(NPRIM_OF,i), &amp;</span><br><span class="line">                            bas(NCTR_OF,i), bas(PTR_EXP,i), bas(PTR_COEFF,i)</span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, <span class="built_in">size</span>(env)</span><br><span class="line">        <span class="built_in">write</span>(<span class="number">11</span>,*) i, env(i)</span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nshl</span><br><span class="line">        shls(<span class="number">1</span>) = i - <span class="number">1</span></span><br><span class="line">        di = CINTcgto_spheric(i-<span class="number">1</span>, bas)</span><br><span class="line">        <span class="keyword">do</span> j = <span class="number">1</span>, nshl</span><br><span class="line">            shls(<span class="number">2</span>) = j - <span class="number">1</span></span><br><span class="line">            dj = CINTcgto_spheric(j-<span class="number">1</span>, bas)</span><br><span class="line">            <span class="built_in">allocate</span>(buf1e(di,dj))</span><br><span class="line">            x = sh_indx(i); y = sh_indx(j)</span><br><span class="line">            <span class="keyword">call</span> cint1e_ovlp_sph(buf1e,shls,atm,natm,bas,nshl,env)</span><br><span class="line">            S(x:,y:) = buf1e(:,:)</span><br><span class="line">            <span class="keyword">call</span> cint1e_kin_sph(buf1e,shls,atm,natm,bas,nshl,env)</span><br><span class="line">            T(x:,y:) = buf1e(:,:)</span><br><span class="line">            <span class="keyword">call</span> cint1e_nuc_sph(buf1e,shls,atm,natm,bas,nshl,env)</span><br><span class="line">            V(x:,y:) = buf1e(:,:)</span><br><span class="line">            <span class="built_in">deallocate</span>(buf1e)</span><br><span class="line">        <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nshl</span><br><span class="line">      shls(<span class="number">1</span>) = i - <span class="number">1</span></span><br><span class="line">      di = CINTcgto_spheric(i-<span class="number">1</span>, bas)</span><br><span class="line">      <span class="keyword">do</span> j = <span class="number">1</span>, nshl</span><br><span class="line">          shls(<span class="number">2</span>) = j - <span class="number">1</span></span><br><span class="line">          dj = CINTcgto_spheric(j-<span class="number">1</span>, bas)</span><br><span class="line">          <span class="keyword">do</span> k = <span class="number">1</span>, nshl</span><br><span class="line">              shls(<span class="number">3</span>) = k - <span class="number">1</span></span><br><span class="line">              dk = CINTcgto_spheric(k-<span class="number">1</span>, bas)</span><br><span class="line">              <span class="keyword">do</span> l = <span class="number">1</span>, nshl</span><br><span class="line">                  shls(<span class="number">4</span>) = l - <span class="number">1</span></span><br><span class="line">                  dl = CINTcgto_spheric(l-<span class="number">1</span>, bas)</span><br><span class="line">                  <span class="built_in">allocate</span>(buf2e(di,dj,dk,dl))</span><br><span class="line">                  x = sh_indx(i); y = sh_indx(j)</span><br><span class="line">                  z = sh_indx(k); w = sh_indx(l)</span><br><span class="line">                  <span class="keyword">call</span> cint2e_sph(buf2e,shls,atm,natm,bas,nshl,env,<span class="number">0</span>_8)</span><br><span class="line">                  eri(x:,y:,z:,w:) = buf2e(:,:,:,:)</span><br><span class="line">                  <span class="built_in">deallocate</span>(buf2e)</span><br><span class="line">              <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">          <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">      <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">  </span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nbas</span><br><span class="line">        <span class="built_in">write</span>(<span class="number">11</span>,<span class="string">"(*(F15.10))"</span>) S(i,:)</span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">write</span>(<span class="number">11</span>,*)</span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nbas</span><br><span class="line">        <span class="built_in">write</span>(<span class="number">11</span>,<span class="string">"(*(F15.10))"</span>) T(i,:)</span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">write</span>(<span class="number">11</span>,*)</span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nbas</span><br><span class="line">        <span class="built_in">write</span>(<span class="number">11</span>,<span class="string">"(*(F15.10))"</span>) V(i,:)</span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">write</span>(<span class="number">11</span>,*)</span><br><span class="line">    <span class="keyword">do</span> i = <span class="number">1</span>, nbas</span><br><span class="line">        <span class="keyword">do</span> j = <span class="number">1</span>, nbas</span><br><span class="line">            <span class="keyword">do</span> k = <span class="number">1</span>, nbas</span><br><span class="line">                <span class="built_in">write</span>(<span class="number">11</span>,<span class="string">"(*(F15.10))"</span>) eri(i,j,k,:)</span><br><span class="line">            <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">        <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    <span class="keyword">end</span> <span class="keyword">do</span></span><br><span class="line">    close(<span class="number">11</span>)</span><br><span class="line">    </span><br><span class="line"><span class="keyword">end</span> <span class="function"><span class="keyword">program</span></span> main</span><br></pre></td></tr></table></figure>
+<p>我们可以用Psi4的电子积分做对比。有些矩阵元的顺序不一样，这个很正常（2p壳层的3个基函数的顺序不同）。</p>
+<p>Psi4获得电子积分的代码<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> psi4</span><br><span class="line"></span><br><span class="line">mol = psi4.geometry(<span class="string">'''</span></span><br><span class="line"><span class="string">    O  0.00000000  -0.00000000 -0.11085125</span></span><br><span class="line"><span class="string">    H  0.00000000  -0.78383672  0.44340501</span></span><br><span class="line"><span class="string">    H  0.00000000   0.78383672  0.44340501</span></span><br><span class="line"><span class="string">    unit = au</span></span><br><span class="line"><span class="string">'''</span>)</span><br><span class="line">basis_set = <span class="string">"def2-SVP"</span></span><br><span class="line"></span><br><span class="line">wfn = psi4.core.Wavefunction.build(mol, basis_set)</span><br><span class="line">mints = psi4.core.MintsHelper(wfn.basisset())</span><br><span class="line"></span><br><span class="line"><span class="comment"># get integrals from psi4 module</span></span><br><span class="line">Enuc = mol.nuclear_repulsion_energy()</span><br><span class="line">S = np.asarray(mints.ao_overlap())</span><br><span class="line">V = np.asarray(mints.ao_potential())</span><br><span class="line">T = np.asarray(mints.ao_kinetic())</span><br><span class="line">I = np.asarray(mints.ao_eri())</span><br></pre></td></tr></table></figure></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Fortran/" rel="tag"># Fortran</a>
+              <a href="/tags/%E9%87%8F%E5%8C%96%E7%BC%96%E7%A8%8B/" rel="tag"># 量化编程</a>
+              <a href="/tags/Libcint/" rel="tag"># Libcint</a>
+          </div>
+
+        
+
+
+        
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">St Maxwell</p>
+  <div class="site-description" itemprop="description">PhD Student in Theoretical and Computational Chemistry at Xiamen University</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">1</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/St-Maxwell" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;St-Maxwell" rel="noopener" target="_blank">GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/st__maxwell" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;st__maxwell" rel="noopener" target="_blank">Twitter</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/st_maxwell" title="知乎 → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;st_maxwell" rel="noopener" target="_blank">知乎</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      友情链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://sobereva.com/" title="http:&#x2F;&#x2F;sobereva.com&#x2F;" rel="noopener" target="_blank">思想家公社的门口</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="http://carbenium.fun/" title="http:&#x2F;&#x2F;carbenium.fun&#x2F;" rel="noopener" target="_blank">十年夜雨十年灯</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 2016 – 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">St Maxwell</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/pangu@4/dist/browser/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+<script type="text/x-mathjax-config">
+    MathJax.Ajax.config.path['mhchem'] = '//cdn.jsdelivr.net/npm/mathjax-mhchem@3';
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+        extensions: ['[mhchem]/mhchem.js'],
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script>
+<script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script>
+
+    
+
+  
+
+</body>
+</html>
