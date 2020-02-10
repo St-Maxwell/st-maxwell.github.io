@@ -18,29 +18,42 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":20,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
-<meta property="og:type" content="website">
-<meta property="og:title" content="东方红茶馆">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="表格法求光谱项的原理 代码的思路 进一步改进 最终版本 参考文献   Update(2017&#x2F;10&#x2F;6):该程序终于实现了直接输出光谱项的功能，因此将文章的标题和链接都修改为「求解电子光谱项的程序」。 求原子光谱项有很多种方法，这里只介绍一种思路简单粗暴的方法。某种程度上可称为是逐一枚举的方法。（等你看完说不定会觉得这个方法很low23333） 其实该方法也可看作是结构化学教科书上讲解两个同科电">
+<meta property="og:type" content="article">
+<meta property="og:title" content="求解电子光谱项的程序">
+<meta property="og:url" content="http://yoursite.com/%E6%B1%82%E8%A7%A3%E7%94%B5%E5%AD%90%E5%85%89%E8%B0%B1%E9%A1%B9%E7%9A%84%E7%A8%8B%E5%BA%8F/index.html">
 <meta property="og:site_name" content="东方红茶馆">
-<meta property="og:description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
+<meta property="og:description" content="表格法求光谱项的原理 代码的思路 进一步改进 最终版本 参考文献   Update(2017&#x2F;10&#x2F;6):该程序终于实现了直接输出光谱项的功能，因此将文章的标题和链接都修改为「求解电子光谱项的程序」。 求原子光谱项有很多种方法，这里只介绍一种思路简单粗暴的方法。某种程度上可称为是逐一枚举的方法。（等你看完说不定会觉得这个方法很low23333） 其实该方法也可看作是结构化学教科书上讲解两个同科电">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-1.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-2.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-3.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-4.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-08-21-5.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-8-30-1.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-8-30-1.png">
+<meta property="og:image" content="http://yoursite.com/images/2017-10-6.png">
+<meta property="article:published_time" content="2017-08-21T15:01:06.000Z">
+<meta property="article:modified_time" content="2020-02-10T13:34:18.501Z">
 <meta property="article:author" content="St Maxwell">
+<meta property="article:tag" content="Fortran">
+<meta property="article:tag" content="光谱项">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/2017-08-21-1.png">
 
-<link rel="canonical" href="http://yoursite.com/">
+<link rel="canonical" href="http://yoursite.com/%E6%B1%82%E8%A7%A3%E7%94%B5%E5%AD%90%E5%85%89%E8%B0%B1%E9%A1%B9%E7%9A%84%E7%A8%8B%E5%BA%8F/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome: true,
-    isPost: false
+    isHome: false,
+    isPost: true
   };
 </script>
 
-  <title>东方红茶馆</title>
+  <title>求解电子光谱项的程序 | 东方红茶馆</title>
   
 
 
@@ -176,173 +189,10 @@
             
 
   <div class="posts-expand">
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/use-libcint/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="St Maxwell">
-      <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="东方红茶馆">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/use-libcint/" class="post-title-link" itemprop="url">电子积分库Libcint的用法</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2020-02-10 00:18:57 / 修改时间：12:42:21" itemprop="dateCreated datePublished" datetime="2020-02-10T00:18:57+08:00">2020-02-10</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%87%8F%E5%AD%90%E5%8C%96%E5%AD%A6/" itemprop="url" rel="index">
-                    <span itemprop="name">量子化学</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
       
-          <p><a href="https://github.com/sunqm/libcint" target="_blank" rel="noopener">libcint</a>是Sun Qiming写的电子积分库，有Fortran接口。我想以后使用它写点小玩意。现在先尝试搞懂它的用法，并分享自己的一点经验。</p>
-<p>当然最重要的是看libcint自己的手册（和GitHub仓库里的例子），然后可以参考这篇文章：<a href="https://mp.weixin.qq.com/s/AULtH_7iPnaA8g5y46T_HQ" target="_blank" rel="noopener">Libcint电子积分库使用教程</a><br>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/use-libcint/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
   
   
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/ringo/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="St Maxwell">
-      <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="东方红茶馆">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/ringo/" class="post-title-link" itemprop="url">Ringo——我的第一个量化程序</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-12-01 00:00:04" itemprop="dateCreated datePublished" datetime="2017-12-01T00:00:04+08:00">2017-12-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-10 21:42:40" itemprop="dateModified" datetime="2020-02-10T21:42:40+08:00">2020-02-10</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%87%8F%E5%AD%90%E5%8C%96%E5%AD%A6/" itemprop="url" rel="index">
-                    <span itemprop="name">量子化学</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>目前 <cite lang="en">Modern Quantum Chemistry</cite> 上氢分子和氦氢离子（HeH<sup>+</sup>）的两个例子已经学完了。</p>
-<p>然后我就尝试写出了自己的第一个量化程序，用于 HeH<sup>+</sup> 的 RHF/STO-3G 的计算。</p>
-<p>程序是用 Fortran 写的。<br>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/ringo/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E6%B1%82%E8%A7%A3%E7%94%B5%E5%AD%90%E5%85%89%E8%B0%B1%E9%A1%B9%E7%9A%84%E7%A8%8B%E5%BA%8F/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -356,8 +206,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/%E6%B1%82%E8%A7%A3%E7%94%B5%E5%AD%90%E5%85%89%E8%B0%B1%E9%A1%B9%E7%9A%84%E7%A8%8B%E5%BA%8F/" class="post-title-link" itemprop="url">求解电子光谱项的程序</a>
+          求解电子光谱项的程序
         </h1>
 
         <div class="post-meta">
@@ -399,7 +248,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <ul>
+        <ul>
 <li><a href="#principle">表格法求光谱项的原理</a></li>
 <li><a href="#thread">代码的思路</a></li>
 <li><a href="#further_development">进一步改进</a></li>
@@ -409,200 +258,99 @@
 
 <p>Update(2017/10/6):该程序终于实现了直接输出光谱项的功能，因此将文章的标题和链接都修改为「求解电子光谱项的程序」。</p>
 <p>求原子光谱项有很多种方法，这里只介绍一种思路简单粗暴的方法。某种程度上可称为是逐一枚举的方法。（等你看完说不定会觉得这个方法很low23333）</p>
-<p>其实该方法也可看作是结构化学教科书上讲解两个同科电子组态（$ (n\text{p})^2 $）的光谱项的方法的推广。<br>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/%E6%B1%82%E8%A7%A3%E7%94%B5%E5%AD%90%E5%85%89%E8%B0%B1%E9%A1%B9%E7%9A%84%E7%A8%8B%E5%BA%8F/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
+<p>其实该方法也可看作是结构化学教科书上讲解两个同科电子组态（$ (n\text{p})^2 $）的光谱项的方法的推广。<br><a id="more"></a></p>
+<h1 id="principle">表格法求光谱项的原理</h1>
+
+<p>为什么某一组态的能级会发生分裂呢？这是因为该组态是简并的（没有某些扰动的理想条件下），而当考虑了扰动后，原本简并的微观能级不再简并而发生分裂。</p>
+<p>我们知道，对于多电子原子中的任意一个电子，其状态可由其单电子原子轨道（波函数）近似描述，其中单电子波函数含有四个量子数。也就是说只要确定了这四个量子数，便能够确定其状态。而组态只能确定电子的主量子数$n$和角量子数$l$，并没有进一步描述电子的磁量子数$m$和自旋磁量子数$m_s$。</p>
+<p>组态的能级分裂就是因为电子的磁量子数和自旋磁量子数的不同，虽然对于多电子原子来说使用总角量子数$L$、总自旋量子数$S$和总量子数$J$的概念会更合适。</p>
+<p>所以该方法的第一步是确定某一组态的所有微观能态。</p>
+<p>以$\text{d}^3$组态为例。我们首先要考虑其所有的电子排布方式。由于Pauli原理的限制，电子的状态没有完全相同的。d轨道有10个对应的自旋轨道，所以总的微观状态数为$\left( \begin{smallmatrix} 10 \\ 3 \end{smallmatrix} \right)=120$。</p>
+<p>以图所示的状态为例，三个电子的磁量子数分别为2、2、1，所以$M_L=5$。而总自旋磁量子数$M_S=1/2$。</p>
+<p><img src="../images/2017-08-21-1.png" alt=""></p>
+<p>也就是我们要计算一共120种微观能态的$M_L$和$M_S$。如果手算的话，显然这是一个很麻烦的事情。</p>
+<p>当我们将120种组合的$M_L$和$M_S$都算出来后，就可绘制出$M_L$-$M_S$表格。</p>
+<p>以总自旋磁量子数为例，三个电子共有四种情况。电子的自旋全部相同以及其中一个电子与另外两个的自旋不同。所以$M_S=3/2, 1/2, -1/2, -3/2$。</p>
+<p>相应地，$M_L=5, 4, 3,\ldots,-4, -5$。我们将各个组合中具有相同$M_L$、$M_S$分别计数，便可得到该表。</p>
+<p><img src="../images/2017-08-21-2.png" alt=""></p>
+<p>然后只需要一步步从表中提取出光谱项即可。</p>
+<p><img src="../images/2017-08-21-3.png" alt=""></p>
+<p>从最大的$M_L=5$开始看。$M_L$为$L$的最大值，$L$的取值范围为$0, 1,\ldots,\pm L$。而且对应的$S(M_S)=1/2, -1/2$。由此我们可推断出该组态有一$^2\text{H}$的光谱项。</p>
+<p>然后我们将表格中二三列的数字均减去1，将该光谱项移除，得到第二步的表。</p>
+<p>下图左边的是第二步得到的表，此时$L=3\ldots-3$，而$S=3/2, 1/2, -1/2, -3/2$。所以可提取出光谱项$^4\text{F}$。</p>
+<p><img src="../images/2017-08-21-4.png" alt=""></p>
+<p>最后得到的$\text{d}^3$组态的所有的光谱项为：$^2\text{H},\ ^2\text{G},\ ^4\text{F},\ ^2\text{F},\ ^2\text{D}(2),\ ^4\text{P},\ ^2\text{P}$</p>
+<p>以上方法适用于任何同科电子组态光谱项的求算。而对于存在不同角量子数电子的组态（例如$\text{p}^2\text{d}^2$），只需要先分别求得p轨道的电子以及d轨道的电子的组合，再将不同角量子数的组合再一次组合即可。以$\text{p}^2\text{d}^2$组态为例，此时总的微观状态数为$\left( \begin{smallmatrix} 6 \\ 2 \end{smallmatrix} \right)\times\left( \begin{smallmatrix} 10 \\ 2 \end{smallmatrix} \right)=15\times 45=675$。这一方法说不上很高效，但思路很简单。之后生成表格的步骤则是完全一样的。</p>
+<h1 id="thread">代码的思路</h1>
+
+<p>我是用Fortran写的这个程序。下面主要介绍代码的思路。</p>
+<p>代码运行示例：<br><img src="../images/2017-08-21-5.png" alt=""></p>
+<p>我目前是实现了d轨道任意个同科电子组态的光谱项的辅助程序。不过将其推广至p、f、g轨道的难度都不大，就不细讲了。</p>
+<p>d轨道共有10个自旋轨道，所以声明了两个含有10个元素的数组分别储存各自旋轨道的磁量子数和自旋磁量子数。</p>
+<p>电子数是由用户输入的，然后依次列举所有的自旋轨道的组合并计算$M_L$和$M_S$并分别储存在两个数组中。这里需要注意，由于电子数并非事先写在程序中，所以列举组合的部分无法直接使用嵌套的循环来做到。这里使用的是一个利用递归的子程序来实现的。</p>
+<p>然后统计$M_L$和$M_S$的取值各有多少种，并生成两个数组分别储存这些值（按由大到小的顺序依次储存）。</p>
+<p>例如：120种组合的$M_L$依次为(5, 3, 2, 3, -1, 5, 4, -2,…)，而之后的那个数组为(5, 4, 3, 2,…,-4, -5)这11个值。</p>
+<p>我们将前一个数组中的120个值与后一个数组进行比较，记录各个值出现的次数，便能够生成表中的数据。</p>
+<p>Update(2017/8/30):将程序功能拓展了，现在可以处理不同角量子数的电子组态，如$({\rm s})^1({\rm p})^2({\rm d})^2$这样的组态。但无法处理如$(2{\rm p})^2(3{\rm p})^2$这一类的组态。</p>
+<p>运行示例：<br><img src="../images/2017-8-30-1.png" alt=""></p>
+<p>关于直接输出光谱项的功能的实现</p>
+<p>由于直接对输出的表格进行操作很麻烦，而且也不必要（因为对整个表格操作需要的循环实现困难，而且表无论是行还是列都是对称的）。所以为了实现该功能，我首先取原有的表格的左上部分单独存为一个如图所示的二维数组。<br><img src="../images/2017-8-30-1.png" alt=""></p>
+<p>之后检查第一行各列的数字$n$，若为零，则跳过；若非零，则根据其对应的总角量子数$L$和总自旋角量子数$S$得到其光谱项（若不为1，输出的光谱项后会有类似 <code>&#60;n&#62;</code> 的标记，表明该光谱项的数目为$n$），之后的各行与各列都减去$n$。一行结束后，进入下一行，重复以上的步骤。（没看明白的话，可以按照第一节的例子跟着手算一下）</p>
+<p>最终得到的结果是<br><img src="../images/2017-10-6.png" alt=""></p>
+<h1 id="further_development">进一步改进</h1>
+
+<p>（很开心，这里提及的功能都已基本实现。当然以后依然会对代码进行完善。）<br>这里倒不是指代码的优化。目前希望是拓展该程序的功能，使之能够处理任意组态，并生成相应的表。</p>
+<p>由于快到了回学校的时间，我把写代码的事暂时停下了，该功能要搁置一段时间才能完成。</p>
+<p>至于为什么不直接输出所有的光谱项，很简单，我还没想出来怎么实现……</p>
+<p>所以目前这都只能算是一个求光谱项的辅助程序。不过我还是挺高兴能写出这么一个玩意的。</p>
+<h1 id="final_version">最终版本</h1>
+Update(2019/7/16): <del>最终版本之再也不改了</del>
+
+进一步学习了Fortran的指针和面向对象编程后，实现了多个相同壳层作为输入的功能。并且把原来的代码几乎重写了一遍。我用gfortran 8编译通过，在gfortran 7上应该也能编译（Intel Visual Fortran肯定也没问题）。代码可以在<a href="https://github.com/St-Maxwell/TermSymbolProgram" target="_blank" rel="noopener">GitHub</a>下载到，没有提供可执行文件（因为之前编译的程序在我现在的电脑上都运行不了，没有安装IVF）。当然如果你不想自己编译的话，我还是可以提供编译好的程序。
+
+以下是运行的例子。
+![](../images/2019-07-16_21-37-51.png)
+
+<h1 id="references">参考文献</h1>
+
+<ol>
+<li><cite lang="en">Journal of Chemical Education</cite>, 52(2), <strong>1975</strong>:87-89</li>
+<li><cite>大学化学</cite>, 29(2), <strong>2014</strong>:44-46</li>
+</ol>
     </div>
 
     
     
     
+
       <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
+          <div class="post-tags">
+              <a href="/tags/Fortran/" rel="tag"># Fortran</a>
+              <a href="/tags/%E5%85%89%E8%B0%B1%E9%A1%B9/" rel="tag"># 光谱项</a>
+          </div>
 
         
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/Sob%E5%AF%B9Exploring-Chemistry%E7%AC%AC%E4%B8%89%E7%89%88%E7%9A%84%E6%89%B9%E5%88%A4/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="St Maxwell">
-      <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
-    </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="东方红茶馆">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/Sob%E5%AF%B9Exploring-Chemistry%E7%AC%AC%E4%B8%89%E7%89%88%E7%9A%84%E6%89%B9%E5%88%A4/" class="post-title-link" itemprop="url">Sob对Exploring Chemistry第三版的批判</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-05-10 22:12:04" itemprop="dateCreated datePublished" datetime="2017-05-10T22:12:04+08:00">2017-05-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-10 21:16:02" itemprop="dateModified" datetime="2020-02-10T21:16:02+08:00">2020-02-10</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%87%8F%E5%AD%90%E5%8C%96%E5%AD%A6/" itemprop="url" rel="index">
-                    <span itemprop="name">量子化学</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>一直以来就听说Exploring Chemistry一书的第三版非常不靠谱。刚刚在群里看到Sobereva老师对该书进行了大量的批判（原话：「本来想写个系统性的第三版的大批判，但现在没兴致了，上面只是放出了一部分之前忍不住吐槽的」）。虽然并没有涉及到原书的全部，但个人觉得应该是非常有参考价值的，所以决定收录于此。（应该不涉及侵犯著作权吧？）</p>
-<p>以下均为Sob的原文：<br>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/Sob%E5%AF%B9Exploring-Chemistry%E7%AC%AC%E4%B8%89%E7%89%88%E7%9A%84%E6%89%B9%E5%88%A4/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
         
-      
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/Sob%E5%AF%B9Exploring-Chemistry%E7%AC%AC%E4%B8%89%E7%89%88%E7%9A%84%E6%89%B9%E5%88%A4/" rel="prev" title="Sob对Exploring Chemistry第三版的批判">
+      <i class="fa fa-chevron-left"></i> Sob对Exploring Chemistry第三版的批判
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/ringo/" rel="next" title="Ringo——我的第一个量化程序">
+      Ringo——我的第一个量化程序 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
       </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/%E6%B0%A2%E5%8E%9F%E5%AD%90%E5%BE%84%E5%90%91%E6%B3%A2%E5%87%BD%E6%95%B0%E6%95%B0%E5%80%BC%E6%B1%82%E8%A7%A3/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="St Maxwell">
-      <meta itemprop="description" content="PhD Student in Theoretical and Computational Chemistry at Xiamen University">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="东方红茶馆">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/%E6%B0%A2%E5%8E%9F%E5%AD%90%E5%BE%84%E5%90%91%E6%B3%A2%E5%87%BD%E6%95%B0%E6%95%B0%E5%80%BC%E6%B1%82%E8%A7%A3/" class="post-title-link" itemprop="url">氢原子径向波函数数值求解</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-03-11 10:36:11" itemprop="dateCreated datePublished" datetime="2017-03-11T10:36:11+08:00">2017-03-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-10 21:13:05" itemprop="dateModified" datetime="2020-02-10T21:13:05+08:00">2020-02-10</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E9%87%8F%E5%AD%90%E5%8C%96%E5%AD%A6/" itemprop="url" rel="index">
-                    <span itemprop="name">量子化学</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在此之前，我已经写了一段数值求解一维量子谐振子波函数的Python代码。建议先从该帖子开始阅读（<a href="https://www.kechuang.org/t/81454" target="_blank" rel="noopener">Numerov方法数值求解一维量子谐振子波函数</a>），涉及到的Numerov方法的原理就不再重复了。<br>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/%E6%B0%A2%E5%8E%9F%E5%AD%90%E5%BE%84%E5%90%91%E6%B3%A2%E5%87%BD%E6%95%B0%E6%95%B0%E5%80%BC%E6%B1%82%E8%A7%A3/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
   </article>
   
   
   
 
   </div>
-
-  
-
 
 
           </div>
@@ -653,6 +401,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#principle"><span class="nav-number">1.</span> <span class="nav-text">表格法求光谱项的原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#thread"><span class="nav-number">2.</span> <span class="nav-text">代码的思路</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#further_development"><span class="nav-number">3.</span> <span class="nav-text">进一步改进</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#final_version"><span class="nav-number">4.</span> <span class="nav-text">最终版本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#references"><span class="nav-number">5.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
